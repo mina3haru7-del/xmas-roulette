@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#163d2a">
+<meta property="og:title" content="🎄 クリスマス プレゼント交換ルーレット">
+<meta property="og:description" content="あなた専用のルーレットです。ほかの人には見せないでね！">
+<title>プレゼント交換ルーレット</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .stage { position: relative; width: min(86vw, 360px); aspect-ratio: 1; margin: 30px auto 28px; }
+  .pointer {
+    position: absolute; left: 50%; top: -14px; z-index: 3;
+    width: 0; height: 0; transform: translateX(-50%);
+    border-left: 18px solid transparent; border-right: 18px solid transparent;
+    border-top: 34px solid var(--gold);
+    filter: drop-shadow(0 3px 2px rgba(0,0,0,.45));
+  }
+  .pointer::after {
+    content: "⭐"; position: absolute; left: -12px; top: -58px; font-size: 24px;
+  }
+  .pointer.blink { animation: blink .5s ease-in-out 4; }
+  @keyframes blink { 50% { filter: drop-shadow(0 0 12px #fff6b0) brightness(1.4); } }
+  .rim {
+    position: absolute; inset: 0; border-radius: 50%;
+    background: var(--gold);
+    box-shadow: 0 0 0 6px var(--red), 0 0 30px rgba(232,185,49,.5), 0 14px 30px rgba(0,0,0,.45);
+  }
+  .lights { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+  .lights i {
+    position: absolute; width: 10px; height: 10px; margin: -5px; border-radius: 50%;
+    background: #fff6b0; box-shadow: 0 0 8px #fff6b0;
+    animation: twinkle 1.2s ease-in-out infinite;
+  }
+  .lights i:nth-child(odd) { animation-delay: .6s; }
+  @keyframes twinkle { 50% { opacity: .25; } }
+  .wheel {
+    position: absolute; inset: 10px; border-radius: 50%; overflow: hidden;
+    transition: transform 5.2s cubic-bezier(.12,.68,.1,1);
+    will-change: transform;
+  }
+  .wheel svg { display: block; width: 100%; height: 100%; }
+  .hub {
+    position: absolute; left: 50%; top: 50%; z-index: 2; width: 22%; aspect-ratio: 1;
+    transform: translate(-50%, -50%); border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff 0%, var(--cream) 40%, #e6d3ad 100%);
+    border: 4px solid var(--gold); display: grid; place-items: center; font-size: clamp(22px, 7vw, 32px);
+    box-shadow: 0 4px 10px rgba(0,0,0,.35);
+  }
+  .result { margin-top: 24px; text-align: center; animation: pop .6s cubic-bezier(.2,1.6,.4,1) both; }
+  @keyframes pop { from { transform: scale(.6); opacity: 0; } }
+  .result .lead { font-size: 15px; color: var(--muted); margin: 0; }
+  .result .who {
+    font-family: "Mochiy Pop One", sans-serif; font-size: clamp(34px, 11vw, 48px);
+    color: var(--red); margin: 6px 0 2px; line-height: 1.2;
+  }
+  .result .san { font-size: .5em; color: var(--ink); }
+  .result .meta { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 14px 0 6px; }
+  .result .meta span {
+    background: #f3e6c6; border-radius: 999px; padding: 6px 14px; font-size: 14px; font-weight: 700;
+  }
+  .result .secret { font-size: 14px; line-height: 1.8; margin: 12px 0 0; }
+  .again { margin-top: 18px; padding: 10px 22px; font-size: 15px; color: var(--ink); background: var(--gold-light); }
+  #confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
+  @media (prefers-reduced-motion: reduce) { .wheel { transition-duration: 1.6s; } }
+</style>
+</head>
+<body>
+<canvas id="confetti" aria-hidden="true"></canvas>
+<main class="wrap">
+  <div class="garland" aria-hidden="true">🎄 🎁 🔔 🎁 🎄</div>
+
+  <section id="loading"><p class="sub">よみこみ中…</p></section>
+
+  <section id="app" hidden>
+    <h1><span id="me"></span>さんの<br>プレゼント交換ルーレット</h1>
+    <p class="sub">だれにプレゼントを渡すか決めよう！</p>
+
+    <div class="stage">
+      <div class="rim"></div>
+      <div class="pointer" id="pointer"></div>
+      <div class="wheel" id="wheel"></div>
+      <div class="lights" id="lights"></div>
+      <div class="hub" aria-hidden="true">🎅</div>
+    </div>
+
+    <button class="btn btn-start" id="start">スタート</button>
+    <p class="note" id="hint">何回まわしても、相手は同じ人になります</p>
+
+    <div class="card result" id="result" hidden aria-live="polite">
+      <p class="lead">🎁 あなたがプレゼントを渡す相手は…</p>
+      <p class="who"><span id="target"></span><span class="san"> さん</span></p>
+      <div class="meta" id="meta"></div>
+      <p class="secret">当日までナイショだよ 🤫<br>このURLは、ほかの人には見せないでね。<br>あとで同じURLを開けば、また確認できます。</p>
+      <button class="btn again" id="again">もう一度まわす</button>
+    </div>
+  </section>
+
+  <section id="error" hidden>
+    <div class="card error">
+      <h2 id="errTitle">ルーレットが開けませんでした</h2>
+      <div id="errBody"></div>
+    </div>
+  </section>
+</main>
+
+<script src="common.js"></script>
+<script>
+(async () => {
+  letItSnow();
+  const $ = (id) => document.getElementById(id);
+
+  function showError(title, html) {
+    $("loading").hidden = true;
+    $("errTitle").textContent = title;
+    $("errBody").innerHTML = html;
+    $("error").hidden = false;
+  }
+
+  const token = new URLSearchParams(location.search).get("t");
+  if (!token) {
+    showError("専用のURLから開いてね", "<p>このページは、主催者から届いた<b>あなた専用のURL</b>から開いてください。</p>");
+    return;
+  }
+  if (!window.crypto || !crypto.subtle) {
+    showError("このブラウザでは開けません", "<p>SafariやChromeで開き直してみてください。</p>");
+    return;
+  }
+
+  let data;
+  try {
+    data = await XR.open(token);
+  } catch (e) {
+    console.error(e);
+    showError("URLが正しくないようです",
+      "<p>URLが途中で切れているかもしれません。<br>LINEのメッセージから、もう一度開き直してください。</p>");
+    return;
+  }
+
+  const names = data.n;
+  const n = names.length;
+  const me = names[data.g];
+  const target = names[data.r];
+  $("me").textContent = me;
+  $("target").textContent = target;
+  document.title = me + "さんのプレゼント交換ルーレット";
+  if (data.b) addMeta("💰 予算 " + data.b);
+  if (data.d) addMeta("📅 " + data.d);
+
+  function addMeta(text) {
+    const s = document.createElement("span");
+    s.textContent = text;
+    $("meta").appendChild(s);
+  }
+
+  // ルーレット盤を描く（上が0度、時計回り）
+  const NS = "http://www.w3.org/2000/svg";
+  const colors = ["#c8102e", "#1f7a4a", "#e8b931"];
+  const textColors = ["#fff", "#fff", "#5a2a0a"];
+  const seg = 360 / n;
+  const pt = (deg, r) => {
+    const a = (deg * Math.PI) / 180;
+    return [50 + r * Math.sin(a), 50 - r * Math.cos(a)];
+  };
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", "0 0 100 100");
+  names.forEach((name, i) => {
+    const c = i % 3 === 0 ? 0 : i % 3 === 1 ? 1 : 2;
+    // 人数が3の倍数+1のとき、最後と最初が同じ色にならないようにする
+    const ci = n % 3 === 1 && i === n - 1 ? 1 : c;
+    const [x1, y1] = pt(i * seg, 50);
+    const [x2, y2] = pt((i + 1) * seg, 50);
+    const path = document.createElementNS(NS, "path");
+    path.setAttribute("d", `M50 50 L${x1} ${y1} A50 50 0 ${seg > 180 ? 1 : 0} 1 ${x2} ${y2} Z`);
+    path.setAttribute("fill", colors[ci]);
+    path.setAttribute("stroke", "#fff8ec");
+    path.setAttribute("stroke-width", "0.6");
+    svg.appendChild(path);
+
+    const mid = i * seg + seg / 2;
+    const [tx, ty] = pt(mid, 33);
+    const label = document.createElementNS(NS, "text");
+    label.setAttribute("x", tx);
+    label.setAttribute("y", ty);
+    label.setAttribute("transform", `rotate(${mid} ${tx} ${ty})`);
+    label.setAttribute("text-anchor", "middle");
+    label.setAttribute("dominant-baseline", "central");
+    label.setAttribute("fill", textColors[ci]);
+    label.setAttribute("font-size", name.length > 4 ? 6 : 7.5);
+    label.setAttribute("font-weight", "700");
+    label.setAttribute("font-family", "Zen Maru Gothic, sans-serif");
+    label.textContent = name;
+    svg.appendChild(label);
+
+    const [ix, iy] = pt(mid, 15);
+    const icon = document.createElementNS(NS, "text");
+    icon.setAttribute("x", ix);
+    icon.setAttribute("y", iy);
+    icon.setAttribute("text-anchor", "middle");
+    icon.setAttribute("dominant-baseline", "central");
+    icon.setAttribute("font-size", "5");
+    icon.textContent = ["🎁", "⭐", "🔔"][i % 3];
+    svg.appendChild(icon);
+  });
+  $("wheel").appendChild(svg);
+
+  // 外周の電飾
+  for (let i = 0; i < 18; i++) {
+    const [x, y] = pt((360 / 18) * i, 48.5);
+    const dot = document.createElement("i");
+    dot.style.left = x + "%";
+    dot.style.top = y + "%";
+    $("lights").appendChild(dot);
+  }
+
+  // 回転：確定済みの相手(data.r)のマスが真上の矢印で止まるように角度を決める
+  let rotation = 0;
+  let spinning = false;
+  const wheel = $("wheel");
+
+  function spin() {
+    if (spinning) return;
+    spinning = true;
+    $("start").disabled = true;
+    $("result").hidden = true;
+
+    const jitter = (Math.random() - 0.5) * seg * 0.6;
+    const center = data.r * seg + seg / 2 + jitter;
+    const want = (((-center) % 360) + 360) % 360;
+    const now = ((rotation % 360) + 360) % 360;
+    let delta = want - now;
+    if (delta < 0) delta += 360;
+    rotation += 360 * 6 + delta;
+    wheel.style.transform = `rotate(${rotation}deg)`;
+
+    let finished = false;
+    const done = () => {
+      if (finished) return;
+      finished = true;
+      spinning = false;
+      $("start").disabled = false;
+      $("start").textContent = "もう一度まわす";
+      $("pointer").classList.remove("blink");
+      void $("pointer").offsetWidth;
+      $("pointer").classList.add("blink");
+      $("result").hidden = false;
+      $("result").style.animation = "none";
+      void $("result").offsetWidth;
+      $("result").style.animation = "";
+      if (navigator.vibrate) navigator.vibrate([80, 60, 160]);
+      confetti();
+      setTimeout(() => $("result").scrollIntoView({ behavior: "smooth", block: "center" }), 250);
+    };
+    wheel.addEventListener("transitionend", done, { once: true });
+    setTimeout(done, 6000);
+  }
+
+  $("start").addEventListener("click", spin);
+  $("again").addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setTimeout(spin, 350);
+  });
+
+  // 紙吹雪
+  function confetti() {
+    const cv = $("confetti");
+    const ctx = cv.getContext("2d");
+    const dpr = window.devicePixelRatio || 1;
+    cv.width = innerWidth * dpr;
+    cv.height = innerHeight * dpr;
+    ctx.scale(dpr, dpr);
+    const palette = ["#c8102e", "#1f7a4a", "#e8b931", "#f7dc7a", "#ffffff", "#e2273f"];
+    const parts = Array.from({ length: 170 }, (_, i) => ({
+      x: innerWidth / 2 + (Math.random() - 0.5) * 80,
+      y: innerHeight * 0.45,
+      vx: (Math.random() - 0.5) * 14,
+      vy: -6 - Math.random() * 11,
+      w: 6 + Math.random() * 6,
+      h: 8 + Math.random() * 10,
+      r: Math.random() * Math.PI,
+      vr: (Math.random() - 0.5) * 0.4,
+      c: palette[i % palette.length],
+      star: Math.random() < 0.15,
+    }));
+    const t0 = performance.now();
+    (function frame(t) {
+      const age = t - t0;
+      ctx.clearRect(0, 0, innerWidth, innerHeight);
+      for (const p of parts) {
+        p.vy += 0.28;
+        p.vx *= 0.99;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.r += p.vr;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, 1 - age / 4200);
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.r);
+        ctx.fillStyle = p.c;
+        if (p.star) {
+          ctx.font = "16px sans-serif";
+          ctx.fillText("⭐", -8, 8);
+        } else {
+          ctx.fillRect(-p.w / 2, (-p.h / 2) * Math.cos(p.r * 3), p.w, p.h * Math.cos(p.r * 3));
+        }
+        ctx.restore();
+      }
+      if (age < 4300) requestAnimationFrame(frame);
+      else ctx.clearRect(0, 0, innerWidth, innerHeight);
+    })(t0);
+  }
+
+  $("loading").hidden = true;
+  $("app").hidden = false;
+})();
+</script>
+</body>
+</html>

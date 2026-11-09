@@ -1,0 +1,115 @@
+:root {
+  --night: #0f2a1d;
+  --night-2: #163d2a;
+  --red: #c8102e;
+  --red-dark: #8e0b20;
+  --green: #1f7a4a;
+  --green-dark: #135c36;
+  --gold: #e8b931;
+  --gold-light: #f7dc7a;
+  --cream: #fff8ec;
+  --ink: #3a2414;
+  --muted: #7b6a5a;
+  --radius: 20px;
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; }
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  font-family: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif;
+  color: var(--cream);
+  background:
+    radial-gradient(ellipse at 50% -10%, #2c5e43 0%, transparent 60%),
+    linear-gradient(180deg, var(--night-2), var(--night));
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.snow { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.snow span {
+  position: absolute;
+  top: -20px;
+  color: #fff;
+  animation: fall linear infinite;
+}
+@keyframes fall {
+  to { transform: translate(var(--drift), 110vh) rotate(240deg); }
+}
+
+.wrap {
+  position: relative;
+  z-index: 1;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+  text-align: center;
+}
+
+.garland {
+  font-size: 22px;
+  letter-spacing: 6px;
+  margin-bottom: 8px;
+}
+
+h1 {
+  font-family: "Mochiy Pop One", "Zen Maru Gothic", sans-serif;
+  font-weight: 400;
+  font-size: clamp(24px, 7vw, 32px);
+  line-height: 1.35;
+  margin: 0 0 4px;
+  color: var(--gold-light);
+  text-shadow: 0 2px 0 var(--red-dark), 0 0 18px rgba(232, 185, 49, 0.45);
+}
+
+.sub { margin: 0 0 20px; font-size: 15px; opacity: 0.9; }
+
+.card {
+  background: var(--cream);
+  color: var(--ink);
+  border-radius: var(--radius);
+  padding: 20px 18px;
+  border: 3px solid var(--gold);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  text-align: left;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.12s, filter 0.12s;
+}
+.btn:active { transform: scale(0.96); }
+.btn:disabled { filter: grayscale(0.7) opacity(0.6); cursor: default; transform: none; }
+
+.btn-start {
+  font-family: "Mochiy Pop One", "Zen Maru Gothic", sans-serif;
+  font-weight: 400;
+  font-size: 24px;
+  padding: 16px 48px;
+  color: #fff;
+  background: linear-gradient(180deg, #e2273f, var(--red));
+  box-shadow: 0 6px 0 var(--red-dark), 0 10px 20px rgba(0, 0, 0, 0.35);
+  border: 3px solid var(--gold);
+}
+.btn-start:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--red-dark); }
+
+.note { font-size: 13px; opacity: 0.8; margin-top: 14px; line-height: 1.7; }
+
+.error {
+  margin-top: 24px;
+  line-height: 1.8;
+}
+.error h2 { margin: 0 0 8px; font-size: 18px; color: var(--red); }
+
+[hidden] { display: none !important; }
